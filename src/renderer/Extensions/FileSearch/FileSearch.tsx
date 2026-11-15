@@ -3,6 +3,7 @@ import { BasicSearch } from "@Core/Components";
 import type { ExtensionProps } from "@Core/ExtensionProps";
 import { useExtensionSetting } from "@Core/Hooks";
 
+import { FileSearchHelp } from "./FileSearchHelp";
 import { MissingEverythingCliFilePath } from "./MissingEverythingCliFilePath";
 
 export const FileSearch = ({ contextBridge, goBack }: ExtensionProps) => {
@@ -34,6 +35,7 @@ export const FileSearch = ({ contextBridge, goBack }: ExtensionProps) => {
             showGoBackButton
             showFooter
             searchResultListLayout="detailed"
+            footerStartContent={contextBridge.getOperatingSystem() === "Linux" ? <FileSearchHelp /> : undefined}
         />
     );
 };

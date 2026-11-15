@@ -6,6 +6,7 @@ import { Settings16Regular } from "@fluentui/react-icons";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 
+import { FileSearchHelp } from "../../Extensions/FileSearch/FileSearchHelp";
 import { BaseLayout } from "../BaseLayout";
 import { Footer } from "../Footer";
 import { ActionsMenu } from "./ActionsMenu";
@@ -285,6 +286,13 @@ export const Search = ({
         defaultValue: "auto",
     });
 
+    const { value: enabledExtensionIds } = useSetting<string[]>({
+        key: "extensions.enabledExtensionIds",
+        defaultValue: ["ApplicationSearch", "UeliCommand"],
+    });
+
+    const showFileSearchHelp = operatingSystem === "Linux" && enabledExtensionIds.includes("FileSearch");
+
     const { value: searchBarSize } = useSetting<SearchBarSize>({
         key: "appearance.searchBarSize",
         defaultValue: "large",
@@ -425,6 +433,7 @@ export const Search = ({
                                 icon={<Settings16Regular />}
                             />
                         </Tooltip>
+                        {showFileSearchHelp && <FileSearchHelp showPrefix onClose={() => userInput.focus()} />}
                         {rescanStatus === "scanning" && (
                             <>
                                 <Divider appearance="subtle" vertical />

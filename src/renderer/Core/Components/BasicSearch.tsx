@@ -11,7 +11,7 @@ import { SearchResultList } from "@Core/Search/SearchResultList";
 import type { SearchResultListLayout } from "@Core/Search/SearchResultListLayout";
 import { Button, Divider, Input, ProgressBar } from "@fluentui/react-components";
 import { ArrowLeftFilled, SearchRegular } from "@fluentui/react-icons";
-import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
@@ -22,6 +22,11 @@ type BasicSearchProps = {
     showGoBackButton?: boolean;
     showFooter?: boolean;
     searchResultListLayout?: SearchResultListLayout;
+
+    /**
+     * Content shown at the start of the footer, e.g. a help button.
+     */
+    footerStartContent?: ReactNode;
 };
 
 export const BasicSearch = ({
@@ -31,6 +36,7 @@ export const BasicSearch = ({
     showGoBackButton,
     showFooter,
     searchResultListLayout,
+    footerStartContent,
 }: BasicSearchProps) => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState<string>("");
@@ -284,7 +290,7 @@ export const BasicSearch = ({
             footer={
                 showFooter ? (
                     <Footer draggable>
-                        <div />
+                        <div>{footerStartContent}</div>
                         <div style={{ display: "flex", flexDirection: "row", gap: 8 }}>
                             {selectedSearchResultItem ? (
                                 <Button
