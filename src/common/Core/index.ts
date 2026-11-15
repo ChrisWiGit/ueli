@@ -5,6 +5,7 @@ export * from "./DragAndDrop";
 export * as Extension from "./Extension";
 export * from "./ExtensionInfo";
 export * from "./FluentIcon";
+export * from "./AsyncSearchResultItems";
 export * from "./InstantSearchResultItems";
 export * from "./NavigateToArgument";
 export * from "./OperatingSystem";

@@ -152,4 +152,49 @@ describe(ExtensionManager, () => {
         expect(mockedLogger.error).toHaveBeenCalledExactlyOnceWith(expect.stringContaining("simulated error"));
         expect(mockedLogger.error).toHaveBeenCalledExactlyOnceWith(expect.stringContaining("extension2"));
     });
+
+    it("should collect the async search result items of all enabled extensions", async () => {
+        const item1 = <SearchResultItem>{ id: "item1" };
+        const item2 = <SearchResultItem>{ id: "item2" };
+        const logError = vi.fn();
+
+        const extensions = <Extension[]>(<unknown>[
+            {
+                id: "extension1",
+                isSupported: () => true,
+                getAsyncSearchResultItems: () => Promise.resolve({ items: [item1], exclusive: false }),
+            },
+            {
+                id: "extension2",
+                isSupported: () => true,
+                getAsyncSearchResultItems: () => Promise.reject("failed"),
+            },
+            {
+                id: "extension3",
+                isSupported: () => true,
+                getAsyncSearchResultItems: () => Promise.resolve({ items: [item2], exclusive: true }),
+            },
+            { id: "extension4", isSupported: () => true },
+            {
+                id: "disabled",
+                isSupported: () => true,
+                getAsyncSearchResultItems: () =>
+                    Promise.resolve({ items: [<SearchResultItem>{ id: "x" }], exclusive: false }),
+            },
+        ]);
+
+        const extensionManager = new ExtensionManager(
+            <ExtensionRegistry>{ getAll: () => extensions },
+            <SearchIndex>{},
+            <SettingsManager>(<unknown>{ getValue: () => ["extension1", "extension2", "extension3", "extension4"] }),
+            <Logger>{ error: (message) => logError(message) },
+        );
+
+        expect(await extensionManager.getAsyncSearchResultItems("term")).toEqual({
+            items: [item1, item2],
+            exclusive: true,
+        });
+
+        expect(logError).toHaveBeenCalledOnce();
+    });
 });

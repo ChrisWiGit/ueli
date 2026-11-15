@@ -1,5 +1,5 @@
-import type { OperatingSystem, SearchResultItem, SearchResultItemAction } from "@common/Core";
-import type { SearchEngineId } from "@common/Core/Search";
+import type { AsyncSearchResultItems, OperatingSystem, SearchResultItem, SearchResultItemAction } from "@common/Core";
+import { SearchResultItemFilter, type SearchEngineId } from "@common/Core/Search";
 import { useRef, useState } from "react";
 
 import { getActions, getNextSearchResultItemId, getPreviousSearchResultItemId } from "./Helpers";
@@ -32,6 +32,9 @@ const keyboardShortcuts: Record<OperatingSystem, Record<"addToFavorites" | "excl
         excludeFromSearchResults: "Ctrl+Delete",
     },
 };
+
+const asyncSearchResultGroup = "files";
+const asyncSearchDebounceDurationInMs = 200;
 
 const flattenSearchResult = (searchResult: Record<string, SearchResultItem[]>): SearchResultItem[] =>
     Object.values(searchResult).flat();
@@ -72,9 +75,20 @@ export const useSearchViewController = ({
 
     const getSelectedSearchResultItemActions = (): SearchResultItemAction[] => {
         const selectedSearchResultItem = getSelectedSearchResultItem();
-        return selectedSearchResultItem
-            ? getActions(selectedSearchResultItem, favoriteSearchResultItemIds, keyboardShortcuts[operatingSystem])
-            : [];
+        if (!selectedSearchResultItem) {
+            return [];
+        }
+
+        const isAsyncSearchResultItem = (viewModel.searchResult[asyncSearchResultGroup] ?? []).some(
+            (s) => s.id === selectedSearchResultItem.id,
+        );
+
+        return getActions(
+            selectedSearchResultItem,
+            favoriteSearchResultItemIds,
+            keyboardShortcuts[operatingSystem],
+            !isAsyncSearchResultItem,
+        );
     };
 
     const search = (searchTerm: string, selectedItemId?: string) => {
@@ -99,6 +113,67 @@ export const useSearchViewController = ({
             selectedItemId: selectedItemId ?? flattenSearchResult(searchResult)[0]?.id,
             searchResult,
         }));
+
+        searchAsync(searchTerm);
+    };
+
+    const asyncSearchRequestId = useRef(0);
+    const asyncSearchTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+    /**
+     * Asks the extensions for search result items which take a moment to resolve (e.g. file search) and adds them
+     * as their own group. Debounced, and answers that belong to an older search term are dropped.
+     */
+    const searchAsync = (searchTerm: string) => {
+        const requestId = ++asyncSearchRequestId.current;
+
+        clearTimeout(asyncSearchTimeout.current);
+
+        if (searchTerm.trim().length === 0) {
+            return;
+        }
+
+        asyncSearchTimeout.current = setTimeout(async () => {
+            let asyncSearchResultItems: AsyncSearchResultItems;
+
+            try {
+                asyncSearchResultItems = await window.ContextBridge.getAsyncSearchResultItems(searchTerm);
+            } catch {
+                return;
+            }
+
+            if (requestId !== asyncSearchRequestId.current) {
+                return;
+            }
+
+            const items = SearchResultItemFilter.createFrom(asyncSearchResultItems.items)
+                .exclude(excludedSearchResultItemIds)
+                .get();
+
+            if (items.length === 0 && !asyncSearchResultItems.exclusive) {
+                return;
+            }
+
+            setViewModel((prev) => {
+                if (prev.searchTerm !== searchTerm) {
+                    return prev;
+                }
+
+                const searchResult = asyncSearchResultItems.exclusive
+                    ? { [asyncSearchResultGroup]: items }
+                    : { ...prev.searchResult, [asyncSearchResultGroup]: items };
+
+                const flattened = flattenSearchResult(searchResult);
+
+                return {
+                    ...prev,
+                    searchResult,
+                    selectedItemId: flattened.some((s) => s.id === prev.selectedItemId)
+                        ? prev.selectedItemId
+                        : flattened[0]?.id,
+                };
+            });
+        }, asyncSearchDebounceDurationInMs);
     };
 
     const focusUserInput = () => userInputRef.current?.focus();

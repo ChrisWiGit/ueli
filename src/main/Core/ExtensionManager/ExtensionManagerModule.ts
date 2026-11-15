@@ -32,6 +32,10 @@ export class ExtensionManagerModule {
             event.returnValue = extensionManager.getInstantSearchResultItems(searchTerm);
         });
 
+        ipcMain.handle("getAsyncSearchResultItems", (_, { searchTerm }: { searchTerm: string }) =>
+            extensionManager.getAsyncSearchResultItems(searchTerm),
+        );
+
         ipcMain.on("extensionEnabled", async (_, { extensionId }: { extensionId: string }) => {
             rescanStatusManager.change("scanning");
 

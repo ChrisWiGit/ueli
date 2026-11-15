@@ -1,4 +1,8 @@
-import { createEmptyInstantSearchResult, type InstantSearchResultItems } from "@common/Core";
+import {
+    createEmptyInstantSearchResult,
+    type AsyncSearchResultItems,
+    type InstantSearchResultItems,
+} from "@common/Core";
 import type { ExtensionRegistry } from "@Core/ExtensionRegistry";
 import type { Logger } from "@Core/Logger";
 import type { Index, SearchIndex } from "@Core/SearchIndex";
@@ -78,6 +82,32 @@ export class ExtensionManager {
 
             for (const searchResultItem of instantSearchResultItems.before) {
                 result.before.push(searchResultItem);
+            }
+        }
+
+        return result;
+    }
+
+    public async getAsyncSearchResultItems(searchTerm: string): Promise<AsyncSearchResultItems> {
+        const result: AsyncSearchResultItems = { items: [], exclusive: false };
+
+        const extensions = this.getEnabledExtensions().filter((extension) => extension.getAsyncSearchResultItems);
+
+        const promiseResults = await Promise.allSettled(
+            extensions.map((extension) => extension.getAsyncSearchResultItems!(searchTerm)),
+        );
+
+        for (let i = 0; i < extensions.length; i++) {
+            const promiseResult = promiseResults[i];
+
+            if (promiseResult.status === "fulfilled") {
+                result.items.push(...promiseResult.value.items);
+                result.exclusive = result.exclusive || promiseResult.value.exclusive;
+            } else {
+                this.logger.error(
+                    `Unable to retrieve async search result items from extension "${extensions[i].id}". ` +
+                        `Reason: ${promiseResult.reason}`,
+                );
             }
         }
 

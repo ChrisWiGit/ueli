@@ -8,6 +8,7 @@ import type {
 } from "electron";
 
 import type { AboutUeli } from "./AboutUeli";
+import type { AsyncSearchResultItems } from "./AsyncSearchResultItems";
 import type { ExtensionInfo } from "./ExtensionInfo";
 import type { InstantSearchResultItems } from "./InstantSearchResultItems";
 import type { OperatingSystem } from "./OperatingSystem";
@@ -47,6 +48,7 @@ export type ContextBridge = {
     getExtensionResources: <T extends Translations>() => { extensionId: string; resources: Resources<T> }[];
     getExtensionSettingDefaultValue: <Value>(extensionId: string, settingKey: string) => Value;
     getFavorites: () => string[];
+    getAsyncSearchResultItems: (searchTerm: string) => Promise<AsyncSearchResultItems>;
     getInstantSearchResultItems: (searchTerm: string) => InstantSearchResultItems;
     getLogs: () => string[];
     getOperatingSystem: () => OperatingSystem;

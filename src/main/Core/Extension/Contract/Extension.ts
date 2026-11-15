@@ -1,4 +1,4 @@
-import type { InstantSearchResultItems, SearchResultItem } from "@common/Core";
+import type { AsyncSearchResultItems, InstantSearchResultItems, SearchResultItem } from "@common/Core";
 import type { Image } from "@common/Core/Image";
 import type { Resources, Translations } from "@common/Core/Translator";
 
@@ -75,6 +75,15 @@ export interface Extension {
      * @param searchTerm The current search term.
      */
     getInstantSearchResultItems?(searchTerm: string): InstantSearchResultItems;
+
+    /**
+     * Gets search result items for the given search term asynchronously, e.g. by asking an external program. This
+     * method is called (debounced) after the user changed the search term. The items are shown in their own group
+     * below the regular search results.
+     * @param searchTerm The search term, e.g. `"invoice"`.
+     * @returns The items and whether they should be shown exclusively, see `AsyncSearchResultItems`.
+     */
+    getAsyncSearchResultItems?(searchTerm: string): Promise<AsyncSearchResultItems>;
 
     /**
      * If you have a custom UI for your extension you can call it via `contextBridge.invokeExtension(arg)` with any

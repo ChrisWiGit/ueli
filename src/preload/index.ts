@@ -33,6 +33,7 @@ const contextBridgeImplementation: ContextBridge = {
         ipcRenderer.sendSync("getExtensionSettingDefaultValue", { extensionId, settingKey }),
     getFavorites: () => ipcRenderer.sendSync("getFavorites"),
     getLogs: () => ipcRenderer.sendSync("getLogs"),
+    getAsyncSearchResultItems: (searchTerm: string) => ipcRenderer.invoke("getAsyncSearchResultItems", { searchTerm }),
     getInstantSearchResultItems: (searchTerm: string) =>
         ipcRenderer.sendSync("getInstantSearchResultItems", { searchTerm }),
     getOperatingSystem: () => ipcRenderer.sendSync("getOperatingSystem"),
