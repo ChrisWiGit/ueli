@@ -1,3 +1,5 @@
+import { homedir } from "os";
+
 import type { OperatingSystem } from "@common/Core";
 import type { UeliModuleRegistry } from "@Core/ModuleRegistry";
 
@@ -5,6 +7,7 @@ import type { ExtensionBootstrapResult } from "../ExtensionBootstrapResult";
 import type { ExtensionModule } from "../ExtensionModule";
 import { FileSearch } from "./FileSearch";
 import type { FileSearcher } from "./FileSearcher";
+import { executeFile } from "./Linux/executeFile";
 import { LinuxFileSearcher } from "./Linux/LinuxFileSearcher";
 import { MdfindFileSearcher } from "./macOS/MdfindFileSearcher";
 import { EverythingFileSearcher } from "./Windows/EverythingFileSearcher";
@@ -12,7 +15,13 @@ import { EverythingFileSearcher } from "./Windows/EverythingFileSearcher";
 export class FileSearchModule implements ExtensionModule {
     public bootstrap(moduleRegistry: UeliModuleRegistry): ExtensionBootstrapResult {
         const fileSearchers: Record<OperatingSystem, FileSearcher> = {
-            Linux: new LinuxFileSearcher(),
+            Linux: new LinuxFileSearcher(
+                moduleRegistry.get("SettingsManager"),
+                moduleRegistry.get("FileSystemUtility"),
+                moduleRegistry.get("Logger"),
+                executeFile,
+                homedir(),
+            ),
             macOS: new MdfindFileSearcher(moduleRegistry.get("CommandlineUtility")),
             Windows: new EverythingFileSearcher(
                 moduleRegistry.get("CommandlineUtility"),
