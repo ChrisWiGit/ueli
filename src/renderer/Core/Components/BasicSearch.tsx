@@ -190,7 +190,11 @@ export const BasicSearch = ({
         clickHandlers[doubleClickBehavior](searchResultItem);
     };
 
+    const searchRequestId = useRef(0);
+
     useEffect(() => {
+        const requestId = ++searchRequestId.current;
+
         if (!searchTerm) {
             setIsLoading(false);
             setSearchResultItems([]);
@@ -208,6 +212,12 @@ export const BasicSearch = ({
         setClearTimeoutValue(
             setTimeout(async () => {
                 const s = await getSearchResultItems(searchTerm);
+
+                // Drop the answer if the search term has changed in the meantime
+                if (requestId !== searchRequestId.current) {
+                    return;
+                }
+
                 setClearTimeoutValue(undefined);
                 setSearchResultItems(s);
                 setSelectedItemId(s[0]?.id ?? "");
