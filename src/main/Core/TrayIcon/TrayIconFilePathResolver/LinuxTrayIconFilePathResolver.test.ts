@@ -22,16 +22,16 @@ describe(LinuxTrayIconFilePathResolver, () => {
             expect(getModuleAssetPathMock).toHaveBeenCalledWith("TrayIcon", expectedAssetFileName);
         };
 
-        it("should return file path to 'ueli-icon-black-on-transparent.png' when the native theme is light", () =>
+        it("should return file path to 'app-icon-light-transparent.png' when the native theme is light", () =>
             testResolve({
                 shouldUseDarkColors: false,
-                expectedAssetFileName: "ueli-icon-black-on-transparent.png",
+                expectedAssetFileName: "app-icon-light-transparent.png",
             }));
 
-        it("should return file path to 'ueli-icon-white-on-transparent.png' when the native theme is dark", () =>
+        it("should return file path to 'app-icon-dark-transparent.png' when the native theme is dark", () =>
             testResolve({
                 shouldUseDarkColors: true,
-                expectedAssetFileName: "ueli-icon-white-on-transparent.png",
+                expectedAssetFileName: "app-icon-dark-transparent.png",
             }));
     });
 });

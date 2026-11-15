@@ -5,8 +5,8 @@ import type { TrayIconFilePathResolver } from "./TrayIconFilePathResolver";
 
 export class LinuxTrayIconFilePathResolver implements TrayIconFilePathResolver {
     private readonly filenames = {
-        onDarkBackground: "ueli-icon-white-on-transparent.png",
-        onLightBackground: "ueli-icon-black-on-transparent.png",
+        onDarkBackground: "app-icon-dark-transparent.png",
+        onLightBackground: "app-icon-light-transparent.png",
     };
 
     public constructor(
