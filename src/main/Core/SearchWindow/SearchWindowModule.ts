@@ -11,8 +11,10 @@ import {
     WindowsBrowserWindowConstructorOptionsProvider,
 } from "./BrowserWindowConstructorOptionsProvider";
 import { BrowserWindowToggler } from "./BrowserWindowToggler";
+import { getRestorableBounds, saveBoundsOnChange } from "./WindowBounds";
 
 export class SearchWindowModule {
+    private static readonly BoundsSettingKey = "window.searchWindowBounds";
     private static readonly DefaultHideWindowOnOptions = ["blur", "afterInvocation", "escapePressed"];
 
     public static async bootstrap(moduleRegistry: UeliModuleRegistry) {
@@ -22,6 +24,8 @@ export class SearchWindowModule {
         const eventSubscriber = moduleRegistry.get("EventSubscriber");
         const htmlLoader = moduleRegistry.get("BrowserWindowHtmlLoader");
         const ipcMain = moduleRegistry.get("IpcMain");
+        const logger = moduleRegistry.get("Logger");
+        const screen = moduleRegistry.get("Screen");
         const nativeTheme = moduleRegistry.get("NativeTheme");
         const operatingSystem = moduleRegistry.get("OperatingSystem");
         const settingsManager = moduleRegistry.get("SettingsManager");
@@ -47,7 +51,22 @@ export class SearchWindowModule {
             ),
         };
 
-        const searchWindow = new BrowserWindow(browserWindowConstructorOptionsProviders[operatingSystem].get());
+        // Position and size from the last time, if they are still visible on one of the displays
+        const savedBounds = getRestorableBounds(
+            settingsManager.getValue<unknown>(SearchWindowModule.BoundsSettingKey, undefined),
+            screen.getAllDisplays(),
+        );
+
+        const searchWindow = new BrowserWindow({
+            ...browserWindowConstructorOptionsProviders[operatingSystem].get(),
+            ...savedBounds,
+        });
+
+        saveBoundsOnChange(searchWindow, (bounds) => {
+            settingsManager
+                .updateValue(SearchWindowModule.BoundsSettingKey, bounds)
+                .catch((error) => logger.error(`Unable to save the search window bounds. Reason: ${error}`));
+        });
 
         searchWindow.on("close", () => browserWindowRegistry.getById("settings")?.close());
 
