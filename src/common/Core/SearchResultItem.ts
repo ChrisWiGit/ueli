@@ -32,6 +32,12 @@ export type SearchResultItem = {
     details?: string;
 
     /**
+     * If `true`, the details are also shown in the compact search result list layout, next to the name. Useful when
+     * the name alone does not tell items apart, e.g. files with the same name in different folders.
+     */
+    showDetailsInCompactLayout?: boolean;
+
+    /**
      * The image of the search result item. This image will be used in the search result list.
      */
     image: Image;
