@@ -10,6 +10,8 @@ const contextBridgeImplementation: ContextBridge = {
         invoke: (channel, args) => ipcRenderer.invoke(channel, args),
     },
 
+    setStartMenuEntry: (enabled, name) => ipcRenderer.invoke("setStartMenuEntry", { enabled, name }),
+    startMenuEntryExists: () => ipcRenderer.sendSync("startMenuEntryExists"),
     autostartIsEnabled: () => ipcRenderer.sendSync("autostartIsEnabled"),
     autostartSettingsChanged: (autostartIsEnabled) =>
         ipcRenderer.send("autostartSettingsChanged", { autostartIsEnabled }),

@@ -11,6 +11,7 @@ import { Language } from "./Language";
 import { PreserveUserInput } from "./PreserveUserInput";
 import { SearchHistory } from "./SearchHistory";
 import { SetCustomSettingsFilePath } from "./SetCustomSettingsFilePath";
+import { StartMenuEntry } from "./StartMenuEntry";
 import { TrayIconSettings } from "./TrayIcon";
 import { UrlImageGenerator } from "./UrlImageGenerator";
 
@@ -23,6 +24,7 @@ export const General = () => {
             <SettingGroup title={t("general")}>
                 <Language />
                 <Autostart />
+                {operatingSystem === "Linux" && <StartMenuEntry />}
                 {operatingSystem === "macOS" && <DockSettings />}
                 <PreserveUserInput />
             </SettingGroup>

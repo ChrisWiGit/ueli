@@ -5,6 +5,7 @@ export * from "./AppIconFilePathResolver";
 export * from "./AppleScriptUtility";
 export * from "./AssetPathResolver";
 export * from "./Autostart";
+export * from "./StartMenuEntry";
 export * from "./BrowserWindow";
 export * from "./BrowserWindowNotifier";
 export * from "./BrowserWindowRegistry";

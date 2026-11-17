@@ -30,6 +30,8 @@ export type ContextBridge = {
         invoke: IpcRenderer["invoke"];
     };
 
+    setStartMenuEntry: (enabled: boolean, name: string) => Promise<boolean>;
+    startMenuEntryExists: () => boolean;
     autostartIsEnabled: () => boolean;
     autostartSettingsChanged: (autostartIsEnabled: boolean) => void;
     copyTextToClipboard: (textToCopy: string) => void;

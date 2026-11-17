@@ -84,6 +84,7 @@ if (!app.requestSingleInstanceLock()) {
     Core.SearchIndexModule.bootstrap(moduleRegistry);
     Core.GlobalShortcutModule.bootstrap(moduleRegistry);
     Core.AutostartModule.bootstrap(moduleRegistry);
+    Core.StartMenuEntryModule.bootstrap(moduleRegistry);
     Core.ExcludedSearchResultsModule.bootstrap(moduleRegistry);
     Core.FavoriteManagerModule.bootstrap(moduleRegistry);
     Core.UeliCommandModule.bootstrap(moduleRegistry);
