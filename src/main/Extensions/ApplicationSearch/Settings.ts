@@ -35,14 +35,27 @@ export class Settings {
                 "C:\\ProgramData\\Microsoft\\Windows\\Start Menu",
                 join(this.app.getPath("home"), "AppData", "Roaming", "Microsoft", "Windows", "Start Menu"),
             ],
-            linuxFolders: (
-                this.environmentVariableProvider.get("XDG_DATA_DIRS") ||
-                `${join("/", "usr", "local", "share")}:${join("/", "usr", "share")}`
-            )
-                .split(":")
-                .map((dir) => join(dir, "applications")),
+            linuxFolders: this.getDefaultLinuxFolders(),
         };
 
         return defaultValues[key];
+    }
+
+    /**
+     * Returns the "applications" folders of $XDG_DATA_HOME and $XDG_DATA_DIRS in order of precedence, see
+     * https://specifications.freedesktop.org/desktop-entry-spec/latest/file-naming.html
+     */
+    private getDefaultLinuxFolders(): string[] {
+        const dataHome =
+            this.environmentVariableProvider.get("XDG_DATA_HOME") || join(this.app.getPath("home"), ".local", "share");
+
+        const dataDirs = (
+            this.environmentVariableProvider.get("XDG_DATA_DIRS") ||
+            `${join("/", "usr", "local", "share")}:${join("/", "usr", "share")}`
+        ).split(":");
+
+        const folders = [dataHome, ...dataDirs].filter((dir) => dir.length > 0).map((dir) => join(dir, "applications"));
+
+        return [...new Set(folders)];
     }
 }

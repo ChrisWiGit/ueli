@@ -1,4 +1,4 @@
-import { extname } from "path";
+import { extname, relative, sep } from "path";
 
 import type { Image } from "@common/Core/Image";
 import type { AssetPathResolver } from "@Core/AssetPathResolver";
@@ -48,22 +48,42 @@ export class LinuxApplicationRepository implements ApplicationRepository {
         return existingFolderPaths;
     }
 
+    /**
+     * Reads the folders including their subfolders. If several folders contain a file with the same desktop file ID
+     * (e.g. a user specific override in ~/.local/share/applications), only the file of the first folder is used, see
+     * https://specifications.freedesktop.org/desktop-entry-spec/latest/file-naming.html
+     */
     private async getApplicationFilePaths(folderPaths: string[]): Promise<string[]> {
+        const uniqueFolderPaths = [...new Set(folderPaths)];
+
         const readDirectoryPromiseResults = await Promise.allSettled(
-            folderPaths.map((folderPath) => this.fileSystemUtility.readDirectory(folderPath)),
+            uniqueFolderPaths.map((folderPath) => this.fileSystemUtility.readDirectory(folderPath, true)),
         );
 
-        const result: string[] = [];
+        const filePathsByDesktopFileId = new Map<string, string>();
 
-        for (const readDirectoryPromiseResult of readDirectoryPromiseResults) {
-            if (readDirectoryPromiseResult.status === "fulfilled") {
-                result.push(...readDirectoryPromiseResult.value.filter((filePath) => extname(filePath) === ".desktop"));
-            } else {
+        for (let i = 0; i < readDirectoryPromiseResults.length; i++) {
+            const readDirectoryPromiseResult = readDirectoryPromiseResults[i];
+
+            if (readDirectoryPromiseResult.status === "rejected") {
                 this.logger.error(readDirectoryPromiseResult.reason);
+                continue;
+            }
+
+            for (const filePath of readDirectoryPromiseResult.value) {
+                if (extname(filePath) !== ".desktop") {
+                    continue;
+                }
+
+                const desktopFileId = relative(uniqueFolderPaths[i], filePath).split(sep).join("-");
+
+                if (!filePathsByDesktopFileId.has(desktopFileId)) {
+                    filePathsByDesktopFileId.set(desktopFileId, filePath);
+                }
             }
         }
 
-        return result;
+        return [...filePathsByDesktopFileId.values()];
     }
 
     private async generateLinuxApplications(filePaths: string[]): Promise<LinuxApplication[]> {

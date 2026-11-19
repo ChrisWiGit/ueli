@@ -21,6 +21,10 @@ describe(LinuxApplicationRepository, () => {
                 "/usr/share/applications/app4.desktop",
             ],
             "/home/user/my/folder/applications": ["/home/user/my/folder/applications/app5.desktop"],
+            "/home/user/.local/share/applications": [
+                "/home/user/.local/share/applications/app4.desktop",
+                "/home/user/.local/share/applications/wine/Programs/Game.desktop",
+            ],
         };
 
         const mockDesktopFiles: Record<string, Record<string, Record<string, string>>> = {
@@ -35,6 +39,20 @@ describe(LinuxApplicationRepository, () => {
                 "Desktop Entry": {
                     Name: "App5",
                     Icon: "doesntExist",
+                },
+            },
+            // User specific override of app4, takes precedence over /usr/share/applications/app4.desktop
+            "/home/user/.local/share/applications/app4.desktop": {
+                "Desktop Entry": {
+                    Name: "App4 (user)",
+                    Icon: "app4",
+                },
+            },
+            // Located in a subfolder
+            "/home/user/.local/share/applications/wine/Programs/Game.desktop": {
+                "Desktop Entry": {
+                    Name: "Game",
+                    Icon: "game",
                 },
             },
             // NoDisplay, shouldn't show for any desktop
@@ -66,6 +84,7 @@ describe(LinuxApplicationRepository, () => {
         const getSettingsMock = vi.fn().mockImplementation((v) => {
             if (v === "linuxFolders") {
                 return [
+                    "/home/user/.local/share/applications",
                     "/usr/share/applications",
                     "/usr/local/share/applications",
                     "/home/user/my/folder/applications",
@@ -99,7 +118,7 @@ describe(LinuxApplicationRepository, () => {
 
         const mockFileSystemUtility = <FileSystemUtility>{
             isDirectory: (path) => isDirectoryMock(path),
-            readDirectory: (path) => readDirectoryMock(path),
+            readDirectory: (path, recursive) => readDirectoryMock(path, recursive),
             readFile: (path) => readFileMock(path),
         };
 
@@ -166,7 +185,7 @@ describe(LinuxApplicationRepository, () => {
         const mockLogger = <Logger>{ warn: (m) => warnMock(m), error: (m) => errorMock(m) };
 
         // return a list of all applications given in list
-        it("should return all applications for the current desktop", async () => {
+        it("should return all applications for the current desktop, including subfolders and user overrides", async () => {
             const linuxApplicationRepository = new LinuxApplicationRepository(
                 mockFileSystemUtility,
                 mockFileImageGenerator,
@@ -178,6 +197,12 @@ describe(LinuxApplicationRepository, () => {
             );
 
             expect(await linuxApplicationRepository.getApplications()).toEqual([
+                new LinuxApplication("App4 (user)", "/home/user/.local/share/applications/app4.desktop", <Image>{
+                    url: "file:///url/to/icon/app4.png",
+                }),
+                new LinuxApplication("Game", "/home/user/.local/share/applications/wine/Programs/Game.desktop", <Image>{
+                    url: "file:///url/to/icon/game.png",
+                }),
                 new LinuxApplication("App1", "/usr/share/applications/org.app1.desktop", <Image>{
                     url: "file:///url/to/icon/app1.png",
                 }),
@@ -188,6 +213,8 @@ describe(LinuxApplicationRepository, () => {
                     url: "file://genericIcon.png",
                 }),
             ]);
+
+            expect(readDirectoryMock).toHaveBeenCalledWith("/usr/share/applications", true);
         });
     });
 });
